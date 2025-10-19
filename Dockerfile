@@ -23,13 +23,14 @@ ENV RUSTFLAGS="-C strip=debuginfo"
 RUN cargo build --frozen --release --bin medbook-inventoryservice
 
 # ---------- runtime ----------
-FROM debian:bookworm-slim AS runtime
+FROM debian:trixie-slim AS runtime
 RUN apt-get update && apt-get install -y --no-install-recommends \
     ca-certificates libpq5 \
     && rm -rf /var/lib/apt/lists/*
 WORKDIR /app
 
 COPY --from=builder /app/target/release/medbook-inventoryservice /usr/local/bin/server
+COPY --from=builder /app/assets /app/assets
 
 RUN useradd --system --home-dir /app --create-home app && chown -R app:app /app
 USER app

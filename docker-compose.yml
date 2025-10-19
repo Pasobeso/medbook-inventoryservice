@@ -1,0 +1,56 @@
+services:
+  db:
+    image: bitnami/postgresql:latest
+    ports:
+      - 5432:5432
+    restart: unless-stopped
+    volumes:
+      - db_data:/bitnami/postgresql
+    environment:
+      - POSTGRESQL_USERNAME=postgres
+      - POSTGRESQL_PASSWORD=example
+    networks:
+      - backend
+
+  api:
+    image: medbook-inventoryservice:1.0
+    ports:
+      - 3000:3000
+    volumes:
+      - api_data:/app/assets
+    depends_on:
+      - db
+    env_file:
+      - .env.docker
+    networks:
+      - backend
+
+  rmq:
+    image: rabbitmq:management-alpine
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    environment:
+      RABBITMQ_DEFAULT_USER: guest
+      RABBITMQ_DEFAULT_PASS: guest
+      RABBITMQ_DEFAULT_VHOST: /
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq/mnesia
+    networks:
+      - backend
+
+  adminer:
+    image: adminer:latest
+    ports:
+      - "8080:8080"
+    networks:
+      - backend
+
+volumes:
+  db_data:
+  api_data:
+  rabbitmq_data:
+
+networks:
+  backend:
+    driver: bridge
