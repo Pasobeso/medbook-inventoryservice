@@ -13,7 +13,7 @@ services:
       - backend
 
   api:
-    image: medbook-inventoryservice:1.0
+    image: ghcr.io/pasobeso/medbook-inventoryservice
     ports:
       - 3000:3000
     volumes:
