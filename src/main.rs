@@ -22,11 +22,11 @@ async fn main() -> Result<()> {
         .nest_service("/assets", static_service);
 
     tracing::info!("Running migrations...");
-
     let config = config::load()?;
     let migrations_count = db::run_migrations_blocking(MIGRATIONS, &config.database.url).await?;
     tracing::info!("Run {} new migrations successfully", migrations_count);
 
+    tracing::info!("Bootstrapping...");
     bootstrap(
         "InventoryService",
         app,
