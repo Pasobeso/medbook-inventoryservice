@@ -3,7 +3,7 @@ use axum::Router;
 use diesel_migrations::{EmbeddedMigrations, embed_migrations};
 use medbook_core::{
     bootstrap::{self, bootstrap},
-    db,
+    config, db,
 };
 use medbook_inventoryservice::{consumers, routes};
 use tower_http::services::ServeDir;
@@ -22,8 +22,9 @@ async fn main() -> Result<()> {
         .nest_service("/assets", static_service);
 
     tracing::info!("Running migrations...");
-    let migrations_count =
-        db::run_migrations_blocking(MIGRATIONS, &std::env::var("DATABASE_URL")?).await?;
+
+    let config = config::load()?;
+    let migrations_count = db::run_migrations_blocking(MIGRATIONS, &config.database.url).await?;
     tracing::info!("Run {} new migrations successfully", migrations_count);
 
     bootstrap(
