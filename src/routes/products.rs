@@ -17,6 +17,7 @@ use serde::{Deserialize, Serialize};
 use crate::{models::ProductEntity, schema::products};
 
 /// Defines all patient-facing product routes (CRUD operations + authorization).
+#[deprecated]
 pub fn routes() -> Router<AppState> {
     Router::new().nest(
         "/products",
@@ -33,6 +34,7 @@ pub struct GetProductsQuery {
 #[utoipa::path(
     get,
     path = "/products",
+    tags = ["Products"],
     params(
         ("ids" = Option<String>, Query, description = "Comma-separated product IDs to filter (e.g. 1,2,3)")
     ),

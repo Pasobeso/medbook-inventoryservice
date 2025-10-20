@@ -3,7 +3,7 @@ use axum::Router;
 use diesel_migrations::{EmbeddedMigrations, embed_migrations};
 use medbook_core::{
     bootstrap::{self, bootstrap},
-    config, db,
+    config, db, swagger,
 };
 use medbook_inventoryservice::{consumers, routes};
 use tower_http::services::ServeDir;
@@ -17,18 +17,18 @@ async fn main() -> Result<()> {
     bootstrap::init_tracing();
     bootstrap::init_env();
 
-    let openapi_routes =
-        OpenApiRouter::new().routes(utoipa_axum::routes!(routes::products::get_products));
-
-    let swagger_router = utoipa_swagger_ui::SwaggerUi::new("/swagger-ui").url(
-        "/api-docs/openapi.json",
-        openapi_routes.get_openapi().clone(),
-    );
+    let routes = OpenApiRouter::new().routes(utoipa_axum::routes!(routes::products::get_products));
+    let mut openapi = routes.get_openapi().clone();
+    openapi.info = utoipa::openapi::InfoBuilder::new()
+        .title("MedBook InventoryService API")
+        .version("1.0.0")
+        .build();
+    let swagger_ui = swagger::create_swagger_ui(openapi)?;
 
     let static_service = ServeDir::new("./assets");
     let app = Router::new()
-        .merge(openapi_routes)
-        .merge(swagger_router)
+        .merge(routes)
+        .merge(swagger_ui)
         .nest_service("/assets", static_service);
 
     tracing::info!("Running migrations...");
