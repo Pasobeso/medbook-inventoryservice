@@ -1,6 +1,6 @@
 use anyhow::Context;
 use axum::{
-    Json, Router,
+    Router,
     extract::{Query, State},
     response::IntoResponse,
     routing,
@@ -8,7 +8,10 @@ use axum::{
 
 use diesel::{ExpressionMethods, QueryDsl};
 use diesel_async::RunQueryDsl;
-use medbook_core::{app_error::AppError, app_state::AppState};
+use medbook_core::{
+    app_error::{AppError, StdResponse},
+    app_state::AppState,
+};
 use serde::{Deserialize, Serialize};
 
 use crate::{models::ProductEntity, schema::products};
@@ -21,13 +24,23 @@ pub fn routes() -> Router<AppState> {
     )
 }
 
-/// Get products given product_ids
 #[derive(Deserialize, Serialize)]
-struct GetProductsQuery {
+pub struct GetProductsQuery {
     ids: Option<String>,
 }
 
-async fn get_products(
+/// Get products given product_ids
+#[utoipa::path(
+    get,
+    path = "/products",
+    params(
+        ("ids" = Option<String>, Query, description = "Comma-separated product IDs to filter (e.g. 1,2,3)")
+    ),
+    responses(
+        (status = 200, description = "List of products", body = StdResponse<Vec<ProductEntity>, String>)
+    )
+)]
+pub async fn get_products(
     State(state): State<AppState>,
     Query(query): Query<GetProductsQuery>,
 ) -> Result<impl IntoResponse, AppError> {
@@ -62,5 +75,8 @@ async fn get_products(
             .context("Failed to get products")?;
     }
 
-    Ok(Json(products))
+    Ok(StdResponse {
+        data: Some(products),
+        message: Some("Get products successfully"),
+    })
 }
